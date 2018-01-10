@@ -1,0 +1,10 @@
+*.pyc
+.idea
+.ipynb_checkpoints
+*.bak
+*.swp
+*.pkl
+*.json
+.json
+.pkl
+*.zip
