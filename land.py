@@ -2,7 +2,7 @@ import json
 import pandas as pd
 
 df = pd.read_json('data/data.json')
-# df = df.iloc[:200,:]
+df = df.iloc[:200,:]
 
 df['target'] = df.acct_type.apply(lambda x:1*(x[:5]=='fraud'))
 df['listed'] = df.listed.apply(lambda x:1*(x=='y'))
@@ -22,10 +22,16 @@ categoricals = ['channels', 'org_facebook', 'org_twitter', 'fb_published', 'deli
 for cat in categoricals:
     df[cat] = df[cat].apply(lambda x:str(x))
 
-'''CHANGE DATE FROM INT64 TO DATETIME'''
-datetime_columns = ['approx_payout_date', 'event_created', 'event_end', 'event_published', 'event_start', 'user_created']
-for col in datetime_columns:
-    df[col] = pd.to_datetime(df[col], unit = 's')
+
+''' CALCULATE TIME INTERVALS'''
+df['start_to_pay'] = df['approx_payout_date'] - df['event_start']
+df['create_to_pay'] = df['approx_payout_date'] - df['event_created']
+df['duration'] = df['event_end'] - df['event_start']
+df['user_to_create_event'] = df['event_created']-df['user_created']
+df['user_to_publish'] = df['event_published'] - df['user_created']
+df['publish_to_start'] = df['event_start'] - df['event_published']
+
+# df = df.drop(['approx_payout_date','event_start','approx_payout_date','event_created','event_end', 'event_published', 'user_created'], axis = 1)
 
 '''TFIDF ON TEXT COLUMNS'''
 tf_idf_columns = ['description']
