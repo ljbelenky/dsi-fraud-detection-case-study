@@ -40,7 +40,7 @@ def transform(X):
  'has_analytics': [X.has_analytics],
  'has_header': [X.has_header],
  'has_logo': [X.has_logo],
- 'listed': [X.listed],
+ 'listed': [1*(X.listed=='y')],
  'name_capitals': [percent_capitals(X['name'])],
  'name_length': [X.name_length],
  'num_order': [X.num_order],

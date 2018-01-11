@@ -58,7 +58,6 @@ class TextClassifier(object):
 
 def percent_capitals(text):
     text = [a for a in text if a in "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz"]
-
     original_length = len(text)
     if original_length == 0: return 0
     capitals = len([x for x in text if x!=x.lower()])
