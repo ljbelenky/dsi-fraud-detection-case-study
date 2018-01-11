@@ -65,62 +65,64 @@ def percent_capitals(text):
     return capitals/original_length
 
 
-df = pd.read_json('data/data.json')
-#f = df.iloc[:200,:]
-
-df['target'] = df.acct_type.apply(lambda x:1*(x[:5]=='fraud'))
-df['listed'] = df.listed.apply(lambda x:1*(x=='y'))
-
-'''ONLY INTERESTED IN THE LENGTH'''
-columns = ['previous_payouts', 'ticket_types']
-for col in columns:
-    df[col] = df[col].apply(lambda x:len(x))
+if __name__ == '__main__':
 
 
-''' DROP COLUMNS '''
-drop_columns = ['acct_type', 'object_id']
-df = df.drop(drop_columns, axis = 1)
+    df = pd.read_json('data/data.json')
+    # df = df.iloc[:100,:]
 
-''' CHANGE CATEGORICAL DATA TO STRING '''
-categoricals = ['channels', 'org_facebook', 'org_twitter', 'fb_published', 'delivery_method', 'user_type']
-for cat in categoricals:
-    df[cat] = df[cat].apply(lambda x:str(x))
+    df['target'] = df.acct_type.apply(lambda x:1*(x[:5]=='fraud'))
+    df['listed'] = df.listed.apply(lambda x:1*(x=='y'))
 
-'''CALCULATE PERCENT CAPITALS'''
-df['description_capitals'] = df.description.apply(lambda x:percent_capitals(x))
-df['name_capitals'] = df.name.apply(lambda x:percent_capitals(x))
+    '''ONLY INTERESTED IN THE LENGTH'''
+    columns = ['previous_payouts', 'ticket_types']
+    for col in columns:
+        df[col] = df[col].apply(lambda x:len(x))
 
 
-''' CALCULATE TIME INTERVALS'''
-s_d = 3600*24
-df['start_to_pay'] = (df['approx_payout_date'] - df['event_start'])/s_d
-df['create_to_pay'] = (df['approx_payout_date'] - df['event_created'])/s_d
-df['duration'] = (df['event_end'] - df['event_start'])/s_d
-df['user_to_create_event'] = (df['event_created']-df['user_created'])/s_d
-df['user_to_publish'] = (df['event_published'] - df['user_created'])/s_d
-df['publish_to_start'] = (df['event_start'] - df['event_published'])/s_d
+    ''' DROP COLUMNS '''
+    drop_columns = ['acct_type', 'object_id']
+    df = df.drop(drop_columns, axis = 1)
 
-df = df.drop(['approx_payout_date','event_start','approx_payout_date','event_created','event_end', 'event_published', 'user_created'], axis = 1)
+    ''' CHANGE CATEGORICAL DATA TO STRING '''
+    categoricals = ['channels', 'org_facebook', 'org_twitter', 'fb_published', 'delivery_method', 'user_type']
+    for cat in categoricals:
+        df[cat] = df[cat].apply(lambda x:str(x))
 
-'''TFIDF ON TEXT COLUMNS'''
-tf_idf_columns = ['description']
-df['description_prob'] = 0
-
-dummy_columns = [col for col in df.columns if df[col].dtype=='O']
-
-dummy_columns.remove('description')
+    '''CALCULATE PERCENT CAPITALS'''
+    df['description_capitals'] = df.description.apply(lambda x:percent_capitals(x))
+    df['name_capitals'] = df.name.apply(lambda x:percent_capitals(x))
 
 
-for col in dummy_columns:
-    categories = df[col].nunique()
-    # print(col, categories)
-    if categories > 20:
-        print('Dropping ', col)
-    else:
-        dummies = pd.get_dummies(df[col], prefix = col, dummy_na = True, drop_first = True)
-        df = pd.concat([df, dummies], axis = 1)
-    del df[col]
+    ''' CALCULATE TIME INTERVALS'''
+    s_d = 3600*24
+    df['start_to_pay'] = (df['approx_payout_date'] - df['event_start'])/s_d
+    df['create_to_pay'] = (df['approx_payout_date'] - df['event_created'])/s_d
+    df['duration'] = (df['event_end'] - df['event_start'])/s_d
+    df['user_to_create_event'] = (df['event_created']-df['user_created'])/s_d
+    df['user_to_publish'] = (df['event_published'] - df['user_created'])/s_d
+    df['publish_to_start'] = (df['event_start'] - df['event_published'])/s_d
 
-text_c = TextClassifier()
-text_c.fit(df.description, df.target)
-df['description_prob'] = text_c.predict_proba(df.description)
+    df = df.drop(['approx_payout_date','event_start','approx_payout_date','event_created','event_end', 'event_published', 'user_created'], axis = 1)
+
+    '''TFIDF ON TEXT COLUMNS'''
+    tf_idf_columns = ['description']
+    df['description_prob'] = 0
+
+    dummy_columns = [col for col in df.columns if df[col].dtype=='O']
+
+    dummy_columns.remove('description')
+
+    for col in dummy_columns:
+        categories = df[col].nunique()
+        # print(col, categories)
+        if categories > 20:
+            print('Dropping ', col)
+        else:
+            dummies = pd.get_dummies(df[col], prefix = col, dummy_na = (col!='delivery_method'), drop_first = True)
+            df = pd.concat([df, dummies], axis = 1)
+        del df[col]
+    #
+    # t_c = TextClassifier()
+    # t_c.fit(df.description.values, df.target.values)
+    # predictions = t_c.predict_proba(df.description.values)
